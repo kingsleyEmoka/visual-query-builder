@@ -1,6 +1,7 @@
 "use client"
 
 import { QueryBuilder } from "@/components/builder/QueryBuilder"
+import { ResultsPanel } from "@/components/builder/ResultsPanel"
 import { useQueryStore } from "@/store/queryStore"
 import { generateSQL } from "@/lib/generators/sqlGenerator"
 import { generateMongoQuery } from "@/lib/generators/mongoGenerator"
@@ -27,6 +28,7 @@ export default function Home() {
           </pre>
         </div>
       </div>
+      <ResultsPanel />
     </main>
   )
 }
