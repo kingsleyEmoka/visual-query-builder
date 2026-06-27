@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { Group } from "@/types/query"
 import { ValidationError } from "@/types/validation"
 import { useQueryStore } from "@/store/queryStore"
@@ -50,7 +50,7 @@ function SortableItem({ id, children }: { id: string; children: React.ReactNode 
   )
 }
 
-export function GroupBlock({ group, isRoot = false, errors = [] }: GroupBlockProps) {
+function GroupBlockComponent({ group, isRoot = false, errors = [] }: GroupBlockProps) {
   const { addRule, addGroup, removeNode, reorderChildren } = useQueryStore()
   const [isCollapsed, setIsCollapsed] = useState(false)
   const groupErrors = errors.filter((e) => e.nodeId === group.id)
@@ -148,3 +148,5 @@ export function GroupBlock({ group, isRoot = false, errors = [] }: GroupBlockPro
     </div>
   )
 }
+
+export const GroupBlock = memo(GroupBlockComponent)

@@ -1,5 +1,6 @@
 "use client"
 
+import { memo } from "react"
 import { Rule } from "@/types/query"
 import { Operator } from "@/types/operators"
 import { ValidationError } from "@/types/validation"
@@ -12,7 +13,7 @@ type RuleRowProps = {
   errors?: ValidationError[]
 }
 
-export function RuleRow({ rule, errors = [] }: RuleRowProps) {
+function RuleRowComponent({ rule, errors = [] }: RuleRowProps) {
   const { updateRule, removeNode } = useQueryStore()
 
   const operators = rule.field ? getOperatorsForField(USER_SCHEMA, rule.field) : []
@@ -23,7 +24,7 @@ export function RuleRow({ rule, errors = [] }: RuleRowProps) {
     <div className="flex flex-col gap-1">
       <div className="flex items-center gap-2 p-2 border rounded bg-white dark:bg-gray-800 dark:border-gray-700">
         <select
-          className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-grey-600 dark:text-white"
+          className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           value={rule.field}
           onChange={(e) => updateRule(rule.id, { field: e.target.value, operator: "equals", value: "" })}
         >
@@ -36,7 +37,7 @@ export function RuleRow({ rule, errors = [] }: RuleRowProps) {
         </select>
 
         <select
-          className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-grey-600 dark:text-white"
+          className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           value={rule.operator}
           disabled={!rule.field}
           onChange={(e) => updateRule(rule.id, { operator: e.target.value as Operator })}
@@ -50,7 +51,7 @@ export function RuleRow({ rule, errors = [] }: RuleRowProps) {
 
         {inputKind === "boolean" ? (
           <select
-            className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-grey-600 dark:text-white"
+            className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={String(rule.value)}
             onChange={(e) => updateRule(rule.id, { value: e.target.value === "true" })}
           >
@@ -60,7 +61,7 @@ export function RuleRow({ rule, errors = [] }: RuleRowProps) {
         ) : (
           <input
             type={inputKind === "number" ? "number" : inputKind === "date" ? "date" : "text"}
-            className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-grey-600 dark:text-white"
+            className="border rounded px-2 py-1 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             value={String(rule.value)}
             onChange={(e) => updateRule(rule.id, { value: e.target.value })}
           />
@@ -82,3 +83,5 @@ export function RuleRow({ rule, errors = [] }: RuleRowProps) {
     </div>
   )
 }
+
+export const RuleRow = memo(RuleRowComponent)
