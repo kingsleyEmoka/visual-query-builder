@@ -17,9 +17,9 @@ export function ResultsPanel() {
       {results.length === 0 ? (
         <p className="text-sm text-gray-400">No matching results.</p>
       ) : (
-        <table className="w-full text-sm border">
+        <table className="w-full text-sm border dark:border-gray-700">
           <thead>
-            <tr className="bg-gray-100 text-left">
+            <tr className="bg-blue-100 dark:bg-blue-900 dark:text-left">
               <th className="p-2 border">Name</th>
               <th className="p-2 border">Age</th>
               <th className="p-2 border">Status</th>
@@ -28,8 +28,8 @@ export function ResultsPanel() {
             </tr>
           </thead>
           <tbody>
-            {results.map((user) => (
-              <tr key={user.id}>
+            {results.map((user, index) => (
+              <tr key={user.id} className={index % 2 === 0 ? "bg-gray-100 dark:bg-gray-800" : "bg-white dark:bg-gray-900"}>
                 <td className="p-2 border">{user.name}</td>
                 <td className="p-2 border">{user.age}</td>
                 <td className="p-2 border">{user.status}</td>
