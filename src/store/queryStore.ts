@@ -3,8 +3,24 @@ import { Group, QueryNode, Rule } from "@/types/query"
 import { Operator } from "@/types/operators"
 import { generateId } from "@/lib/generateId"
 
+type Preset = {
+  id: string
+  name: string
+  tree: Group
+}
+
 type QueryStore = {
   tree: Group
+  history: Group[]
+   presets: Preset[]
+  // ...existing actions...
+  theme: "light" | "dark"
+toggleTheme: () => void
+  undo: () => void
+  loadTree: (tree: Group) => void
+  savePreset: (name: string) => void
+  loadPreset: (presetId: string) => void
+  deletePreset: (presetId: string) => void
   addRule: (groupId: string) => void
   addGroup: (groupId: string) => void
   removeNode: (nodeId: string) => void
@@ -14,7 +30,11 @@ type QueryStore = {
   ) => void
   updateGroupLogic: (groupId: string, logic: "AND" | "OR") => void
   resetTree: () => void
+  reorderChildren: (parentId: string, oldIndex: number, newIndex: number) => void
+  pushHistory: () => void
+  restoreFromHistory: (index: number) => void
 }
+
 
 function createEmptyRule(): Rule {
   return {
@@ -89,25 +109,99 @@ function updateGroupLogicInTree(tree: Group, groupId: string, logic: "AND" | "OR
   }
 }
 
+function reorderChildrenInTree(
+  tree: Group,
+  parentId: string,
+  oldIndex: number,
+  newIndex: number
+): Group {
+  if (tree.id === parentId) {
+    const newChildren = [...tree.children]
+    const [moved] = newChildren.splice(oldIndex, 1)
+    newChildren.splice(newIndex, 0, moved)
+    return { ...tree, children: newChildren }
+  }
+  return {
+    ...tree,
+    children: tree.children.map((child) =>
+      child.type === "group" ? reorderChildrenInTree(child, parentId, oldIndex, newIndex) : child
+    ),
+  }
+}
+
 const initialTree: Group = createEmptyGroup("AND")
 
-export const useQueryStore = create<QueryStore>((set) => ({
+export const useQueryStore = create<QueryStore>((set, get) => ({
   tree: initialTree,
+  history: [],
+  presets: [],
 
-  addRule: (groupId) =>
+theme: "light",
+
+toggleTheme: () =>
+  set((state) => ({
+    theme: state.theme === "light" ? "dark" : "light",
+  })),
+
+loadTree: (tree) => set({ tree }),
+
+undo: () =>
+  set((state) => {
+    if (state.history.length === 0) return {}
+    const [mostRecent, ...rest] = state.history
+    return { tree: mostRecent, history: rest }
+  }),
+
+savePreset: (name) =>
+  set((state) => ({
+    presets: [...state.presets, { id: generateId(), name, tree: state.tree }],
+  })),
+
+loadPreset: (presetId) =>
+  set((state) => {
+    const preset = state.presets.find((p) => p.id === presetId)
+    return preset ? { tree: preset.tree } : {}
+  }),
+
+deletePreset: (presetId) =>
+  set((state) => ({
+    presets: state.presets.filter((p) => p.id !== presetId),
+  })),
+
+  // ...all your existing actions stay exactly as they are...
+
+ pushHistory: () =>
+    set((state) => ({
+      history: [state.tree, ...state.history].slice(0, 10), // Keep only the last 10 states
+    })),
+  
+  restoreFromHistory: (index) =>
+    set((state) => ({
+      tree: state.history[index],
+    })),
+
+  resetTree: () => set({ tree: createEmptyGroup("AND") }),
+
+  addRule: (groupId) => {
+    get().pushHistory() // Save current state before making changes
     set((state) => ({
       tree: addChildToGroup(state.tree, groupId, createEmptyRule()),
-    })),
+    }))
+  },
 
-  addGroup: (groupId) =>
+  addGroup: (groupId) => {
+    get().pushHistory() // Save current state before making changes
     set((state) => ({
       tree: addChildToGroup(state.tree, groupId, createEmptyGroup()),
-    })),
+    }))
+  },
 
-  removeNode: (nodeId) =>
+  removeNode: (nodeId) => {
+    get().pushHistory() // Save current state before making changes
     set((state) => ({
       tree: removeNodeFromTree(state.tree, nodeId),
-    })),
+    }))
+  },
 
   updateRule: (ruleId, changes) =>
     set((state) => ({
@@ -119,5 +213,8 @@ export const useQueryStore = create<QueryStore>((set) => ({
       tree: updateGroupLogicInTree(state.tree, groupId, logic),
     })),
 
-  resetTree: () => set({ tree: createEmptyGroup("AND") }),
+  reorderChildren: (parentId, oldIndex, newIndex) =>
+    set((state) => ({
+      tree: reorderChildrenInTree(state.tree, parentId, oldIndex, newIndex),
+    })),
 }))
